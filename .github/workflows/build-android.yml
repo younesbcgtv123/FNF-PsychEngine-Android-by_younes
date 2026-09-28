@@ -47,15 +47,14 @@ jobs:
       - name: Install hxcpp
         run: |
           haxelib remove hxcpp || true
-          haxelib install hxcpp 4.2.0
-          haxelib set hxcpp 4.2.0
+          haxelib git hxcpp https://github.com/HaxeFoundation/hxcpp.git
 
       - name: Install Lime
         run: |
           haxelib install lime
           haxelib run lime setup android
 
-      - name: Install libraries
+      - name: Install Psych Engine libraries
         run: |
           haxelib install flixel 5.6.1
           haxelib install flixel-addons 3.2.2
@@ -68,7 +67,7 @@ jobs:
           haxelib remove linc_luajit || true
           haxelib git linc_luajit https://github.com/nebulazorua/linc_luajit.git
 
-      - name: Create keystore
+      - name: Create Android keystore
         run: |
           if [ ! -f key.keystore ]; then
             keytool -genkeypair \
@@ -84,16 +83,34 @@ jobs:
 
       - name: Check environment
         run: |
-          echo "Java:"
+          echo "===== Java ====="
           java -version
 
-          echo "Haxe:"
+          echo "===== Haxe ====="
           haxe --version
 
-          echo "Haxelib:"
+          echo "===== Haxelib ====="
           haxelib list
 
-          echo "Android SDK:"
+          echo "===== Android SDK ====="
           echo "$ANDROID_SDK_ROOT"
 
-          echo "ND
+          echo "===== Android NDK ====="
+          echo "$ANDROID_NDK_HOME"
+
+      - name: Build APK
+        run: |
+          chmod +x quick_build.sh
+          ./quick_build.sh release
+
+      - name: Find APK
+        run: |
+          echo "===== APK files ====="
+          find export -type f -name "*.apk" -print
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PsychEngine-Android
+          path: export/**/*.apk
+          if-no-files-found: error
