@@ -1,18 +1,18 @@
-name: Android APK Build
+name: Build Android APK
 
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    name: Build Psych Engine Android APK
+    name: Build Psych Engine
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -25,20 +25,20 @@ jobs:
 
       - name: Setup Haxelib
         run: |
-          mkdir -p ~/haxelib
-          haxelib setup ~/haxelib
+          mkdir -p "$HOME/haxelib"
+          haxelib setup "$HOME/haxelib"
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Android
+        uses: android-actions/setup-android@v4
 
-      - name: Install Android SDK packages
+      - name: Install Android SDK
         run: |
           sdkmanager "platform-tools"
           sdkmanager "platforms;android-34"
           sdkmanager "build-tools;34.0.0"
           yes | sdkmanager --licenses || true
 
-      - name: Setup Android NDK
+      - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r21e
@@ -55,7 +55,7 @@ jobs:
           haxelib install lime
           haxelib run lime setup android
 
-      - name: Install Psych Engine libraries
+      - name: Install libraries
         run: |
           haxelib install flixel 5.6.1
           haxelib install flixel-addons 3.2.2
@@ -68,11 +68,10 @@ jobs:
           haxelib remove linc_luajit || true
           haxelib git linc_luajit https://github.com/nebulazorua/linc_luajit.git
 
-      - name: Create Android keystore
+      - name: Create keystore
         run: |
           if [ ! -f key.keystore ]; then
             keytool -genkeypair \
-              -v \
               -keystore key.keystore \
               -alias 1 \
               -keyalg RSA \
@@ -83,19 +82,18 @@ jobs:
               -dname "CN=Psych Engine, OU=Android, O=Psych Engine, L=Unknown, ST=Unknown, C=US"
           fi
 
-      - name: Build APK
+      - name: Check environment
         run: |
-          chmod +x quick_build.sh
-          ./quick_build.sh release
+          echo "Java:"
+          java -version
 
-      - name: Show generated APK
-        run: |
-          echo "Searching for generated APK files..."
-          find export -type f -name "*.apk" -print
+          echo "Haxe:"
+          haxe --version
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: PsychEngine-Android
-          path: export/**/*.apk
-          if-no-files-found: error
+          echo "Haxelib:"
+          haxelib list
+
+          echo "Android SDK:"
+          echo "$ANDROID_SDK_ROOT"
+
+          echo "ND
